@@ -7,8 +7,6 @@ DIGITS = "0123456789"
 SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:,.<>/?|\'\"~"
 BASE_CHAR = UPPER_CASE + LOWER_CASE + DIGITS + SPECIAL_CHARACTERS
 
-LOW = 8
-HIGH = 15
 
 # scramble_string(s) returns the scrambled string of s
 def scramble_string(s):
@@ -16,15 +14,18 @@ def scramble_string(s):
   random.shuffle(lis)
   return ''.join(lis)
 
-def generate_password(data):
+def generate_password(special_char: int, upper_case: int):
+  LOW = 8
+  HIGH = 15
   string = ""
+  
   # get the special character
-  cur = random.choices(SPECIAL_CHARACTERS, k=data["specialChar"])
+  cur = random.choices(SPECIAL_CHARACTERS, k=special_char)
   cur = ''.join(cur)
   string += cur
   
   # get the uppercase letter
-  cur = random.choices(UPPER_CASE, k=data["upperCase"])
+  cur = random.choices(UPPER_CASE, k=upper_case)
   cur = ''.join(cur)
   string += cur
   
@@ -38,3 +39,6 @@ def generate_password(data):
   return scramble_string(string)
 
 # print(generate_password({"specialChar": 5, "upperCase": 3}))
+
+
+

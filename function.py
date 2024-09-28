@@ -1,0 +1,151 @@
+import random
+
+from generate import generate_password
+
+UPPER_CASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+LOWER_CASE = "abcdefghijklmnopqrstuvwxyz"
+DIGITS = "0123456789"
+SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:,.<>/?|\'\"~"
+BASE_CHAR = UPPER_CASE + LOWER_CASE + DIGITS + SPECIAL_CHARACTERS
+BASE_CHAR_LEN = len(BASE_CHAR)
+
+PRIME = 2305843009213693951
+
+#----------HELPER FUNCTIONS----------------------------------------------------------------------------------------------
+def get_dic(base: str):
+  k = len(base)
+  # dic is a bijective map from each character in base to its index
+  dic = {}
+  for i in range(k):
+    dic[base[i]] = i
+  return dic
+
+def get_coordinate(dic: dict, text: str):
+  k = len(text)
+  # coordinate is a array where each element is dic[text[i]]
+  # a coordinate vector
+  coordinate = [dic[text[i]] for i in range(k)]
+  return coordinate
+
+def get_string(base: str, coordinate: list):
+  k = len(coordinate)
+  # convert the coordinate vector back into its string representation
+  # in other words, this function is the inverse of get_coordinate
+  arr = ['' for _ in range(k)]
+  for i in range(k):
+    arr[i] = base[coordinate[i]]
+  return ''.join(arr)
+
+def get_unique_number_representation(coordinate: list):
+  k = len(coordinate)
+  # total is similar to converting binary number representation to base 10
+  # in our case, we convert the 92 (BASE_CHAR_LEN) representation to base 10, which is
+  # uniquely determined by coordinate
+  total = 0
+  for i in range(k):
+    total += coordinate[i] * BASE_CHAR_LEN ** i
+  return total
+
+def get_base(N: int):
+  # we will query the database to get the BASE_CHAR we want
+  return BASE_CHAR
+
+#----------MAIN FUNCTIONS----------------------------------------------------------------------------------------------
+
+def en_salt(coordinate: list, prefix_len: int):
+  k = len(coordinate)
+  arr_len = 2 * k + prefix_len
+  arr = [0 for _ in range(arr_len)]
+  # get the random prefix of length prefix_len
+  for i in range(prefix_len):
+    arr[i] = random.randint(0, BASE_CHAR_LEN - 1)
+  # get the number N
+  number_N_prefix = get_unique_number_representation(arr[:prefix_len]) % PRIME
+  random_coordinate = [random.randint(0, BASE_CHAR_LEN - 1) for _ in range(k)]
+  # put the coordinate vector elements to arr
+  idx1, idx2 = 0, 0
+  if (number_N_prefix % 2 == 0):
+    # N even
+    idx1, idx2 = prefix_len, prefix_len + 1
+  else:
+    # N odd
+    idx1, idx2 = prefix_len + 1, prefix_len
+  for i in range(k):
+    arr[idx1] = coordinate[i]
+    arr[idx2] = random_coordinate[i]
+    idx1 += 2
+    idx2 += 2
+  return arr
+
+def de_salt(coordinate: list, prefix_len: int):
+  prefix = coordinate[:prefix_len] # grab the first prefix_len characters
+  number_N_prefix = get_unique_number_representation(prefix) % PRIME
+  k = len(coordinate)
+  arr_len = (k - prefix_len) // 2
+  arr = [0 for _ in range(arr_len)]
+  # get the wanted characters out
+  if (number_N_prefix % 2 == 0):
+    # N even
+    for i in range(arr_len):
+      idx = prefix_len + 2 * i
+      arr[i] = coordinate[idx]
+  else:
+    # N ood
+    for i in range(arr_len):
+      idx = prefix_len + 2 * i + 1
+      arr[i] = coordinate[idx]
+  return arr
+      
+def hash(coordinate: list, N: int):
+  k = len(coordinate)
+  for i in range(k):
+    coordinate[i] = (coordinate[i] + N * i + 1) % BASE_CHAR_LEN
+  return coordinate
+
+def encrypt(base: str, N: int, password: str):
+  dic = get_dic(base)
+  coordinate_password = get_coordinate(dic, password)
+  coordinate_hash_password = hash(coordinate_password, N)
+  coordinate_salt_password = en_salt(coordinate_hash_password, 5)
+  return get_string(base, coordinate_salt_password)
+
+def decrypt(base: str, N: int, password: str):
+  dic = get_dic(base)
+  dic_reverse = get_dic(base[::-1])
+  coordinate_password = get_coordinate(dic, password[:5]) + get_coordinate(dic_reverse, password[5:])
+  coordinate_salt_password = de_salt(coordinate_password, 5)
+  coordinate_hash_password = hash(coordinate_salt_password, N)
+  return get_string(base[::-1], coordinate_hash_password)
+
+
+def function_password(key: str, password: str, type: str):
+  dic_base_char = get_dic(BASE_CHAR) # dic for the 92 base characters
+  coordinate_key = get_coordinate(dic_base_char, key) # the key in its coordinate vertor
+  number_N_key = get_unique_number_representation(coordinate_key) % PRIME
+  
+  my_base_char = get_base(number_N_key) # the base characters got from key
+  
+  if (type == "encrypt"):
+    return encrypt(my_base_char, number_N_key, password)
+  elif (type == "decrypt"):
+    return decrypt(my_base_char, number_N_key, password)
+  else:
+    print("Error in type name")
+  
+#----------TEST----------------------------------------------------------------------------------------------
+
+def test(number_of_test: int):
+  
+  for _ in range(number_of_test):
+    my_key = ''.join([BASE_CHAR[random.randint(0, BASE_CHAR_LEN - 1)] for _ in range(int(1e2))])
+    
+    special_char = random.randint(0, 10)
+    upper_case = random.randint(0, 10)
+    password = generate_password(special_char, upper_case)
+    a = function_password(my_key, password, "encrypt")
+    b = function_password(my_key, a, "decrypt")
+    if (b != password):
+      print('wrong')
+      break
+  
+# test(int(1e4))
