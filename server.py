@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 
 from generate import generate_password
-from function import function_password
+from encrypt_decrypt import function_password
 
 app = Flask(__name__)
 
