@@ -12,6 +12,7 @@ BASE_CHAR_LEN = len(BASE_CHAR)
 PRIME = 2147483647
 
 PREFIX_LEN = 5
+ALTERNATE_LEN = 4 # alternate length is 3, i.e 4 - 1
 
 #----------HELPER FUNCTIONS----------------------------------------------------------------------------------------------
 def get_dic(base: str):
@@ -65,14 +66,15 @@ def to_base(number: int, base: int):
 
 def en_salt(coordinate: list, prefix_len: int):
   k = len(coordinate)
-  arr_len = 2 * k + prefix_len
+  arr_len = ALTERNATE_LEN * k + prefix_len
   arr = [0 for _ in range(arr_len)]
   # get the random prefix of length prefix_len
   for i in range(prefix_len):
     arr[i] = random.randint(0, BASE_CHAR_LEN - 1)
+  
   # get the number N
   number_N_prefix = get_unique_number_representation(arr[:prefix_len]) % PRIME
-  random_coordinate = [random.randint(0, BASE_CHAR_LEN - 1) for _ in range(k)]
+  random_coordinate = [random.randint(0, BASE_CHAR_LEN - 1) for _ in range((ALTERNATE_LEN - 1) * k)]
   # put the coordinate vector elements to arr
   idx1, idx2 = 0, 0
   if (number_N_prefix % 2 == 0):
@@ -80,30 +82,31 @@ def en_salt(coordinate: list, prefix_len: int):
     idx1, idx2 = prefix_len, prefix_len + 1
   else:
     # N odd
-    idx1, idx2 = prefix_len + 1, prefix_len
+    idx1, idx2 = prefix_len + ALTERNATE_LEN - 1, prefix_len
   for i in range(k):
     arr[idx1] = coordinate[i]
-    arr[idx2] = random_coordinate[i]
-    idx1 += 2
-    idx2 += 2
+    for j in range(ALTERNATE_LEN - 1):
+      arr[idx2 + j] = random_coordinate.pop()
+    idx1 += ALTERNATE_LEN
+    idx2 += ALTERNATE_LEN
   return arr
 
 def de_salt(coordinate: list, prefix_len: int):
   prefix = coordinate[:prefix_len] # grab the first prefix_len characters
   number_N_prefix = get_unique_number_representation(prefix) % PRIME
   k = len(coordinate)
-  arr_len = (k - prefix_len) // 2
+  arr_len = (k - prefix_len) // ALTERNATE_LEN
   arr = [0 for _ in range(arr_len)]
   # get the wanted characters out
   if (number_N_prefix % 2 == 0):
     # N even
     for i in range(arr_len):
-      idx = prefix_len + 2 * i
+      idx = prefix_len + ALTERNATE_LEN * i
       arr[i] = coordinate[idx]
   else:
     # N ood
     for i in range(arr_len):
-      idx = prefix_len + 2 * i + 1
+      idx = prefix_len + ALTERNATE_LEN * (i + 1) - 1
       arr[i] = coordinate[idx]
   return arr
       
@@ -196,3 +199,5 @@ def test_security(number_of_test: int):
 
 # test_security(10)
 # test_accuracy(10000)
+
+# print(function_password('fdslk', '1234', 'encrypt'))
