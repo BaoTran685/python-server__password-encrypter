@@ -9,7 +9,7 @@ SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:,.<>/?|\'\"~"
 BASE_CHAR = UPPER_CASE + LOWER_CASE + DIGITS + SPECIAL_CHARACTERS
 BASE_CHAR_LEN = len(BASE_CHAR)
 
-PRIME = 2305843009213693951
+PRIME = 2147483647
 
 #----------HELPER FUNCTIONS----------------------------------------------------------------------------------------------
 def get_dic(base: str):
@@ -122,7 +122,7 @@ def function_password(key: str, password: str, type: str):
   dic_base_char = get_dic(BASE_CHAR) # dic for the 92 base characters
   coordinate_key = get_coordinate(dic_base_char, key) # the key in its coordinate vertor
   number_N_key = get_unique_number_representation(coordinate_key) % PRIME
-  
+  # print("N", number_N_key)
   my_base_char = get_base(number_N_key) # the base characters got from key
   
   if (type == "encrypt"):
@@ -134,7 +134,7 @@ def function_password(key: str, password: str, type: str):
   
 #----------TEST----------------------------------------------------------------------------------------------
 
-def test(number_of_test: int):
+def test_accuracy(number_of_test: int):
   
   for _ in range(number_of_test):
     my_key = ''.join([BASE_CHAR[random.randint(0, BASE_CHAR_LEN - 1)] for _ in range(int(1e2))])
@@ -147,5 +147,31 @@ def test(number_of_test: int):
     if (b != password):
       print('wrong')
       break
-  
+
+def test_security(number_of_test: int):
+  cnt = 0
+  for _ in range(number_of_test):
+    my_key = ''.join([BASE_CHAR[random.randint(0, BASE_CHAR_LEN - 1)] for _ in range(int(3))])
+    password = function_password(my_key, "1234abcd@", "encrypt")
+    arr = []
+    for i in range(BASE_CHAR_LEN):
+      for j in range(BASE_CHAR_LEN):
+        for h in range(BASE_CHAR_LEN):
+          cur = ''.join([BASE_CHAR[i], BASE_CHAR[j], BASE_CHAR[h]])
+          arr.append(cur)
+    for key in arr:
+      if (key == my_key): continue
+      b = function_password(key, password, "decrypt")
+      if (b == "1234abcd@"):
+        cnt += 1
+        print("error", my_key, key)
+        break
+  print(cnt)
+test_security(100)
+          
+      
+
+a = function_password("baotran", "1234", "encrypt")
+b = function_password("baotrann", a, "decrypt")
+print(b)
 # test(int(1e4))
