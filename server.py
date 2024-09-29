@@ -10,11 +10,13 @@ app = Flask(__name__)
 # PUT
 # DELETE
 
-LOW = 0
-HIGH = 20
+# systemctl status ...
+# ssytemctl restart ...
 
 @app.route('/generate/', methods=['POST'])
 def handleGenerate():
+  LOW = 0
+  HIGH = 20
   data = request.get_json()
   # convert to int
   for key in data.keys():
@@ -35,3 +37,4 @@ def handleFunction():
 
 if (__name__ == "__main__"):
   app.run(debug=True)
+
