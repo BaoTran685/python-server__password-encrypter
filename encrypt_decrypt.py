@@ -50,6 +50,15 @@ def get_base(N: int):
   # we will query the database to get the BASE_CHAR we want
   return BASE_CHAR
 
+def to_base(number: int, base: int):
+  if (number == 0):
+    return 0
+  digits = []
+  while (number != 0):
+    digits.append(str(number % base))
+    number //= base
+  return int(''.join(digits))
+
 #----------MAIN FUNCTIONS----------------------------------------------------------------------------------------------
 
 def en_salt(coordinate: list, prefix_len: int):
@@ -99,22 +108,29 @@ def de_salt(coordinate: list, prefix_len: int):
 def hash(coordinate: list, N: int):
   k = len(coordinate)
   for i in range(k):
-    coordinate[i] = (coordinate[i] + N * i + 1) % BASE_CHAR_LEN
+    coordinate[i] = (coordinate[i] + N * i) % BASE_CHAR_LEN
   return coordinate
 
-def encrypt(base: str, N: int, password: str):
+def encrypt(base: str, hash_lis: list, password: str):
   dic = get_dic(base)
   coordinate_password = get_coordinate(dic, password)
-  coordinate_hash_password = hash(coordinate_password, N)
+  # we are going to hash it multiple times
+  coordinate_hash_password = coordinate_password
+  for hash_number in hash_lis:
+    coordinate_hash_password = hash(coordinate_hash_password, hash_number)
   coordinate_salt_password = en_salt(coordinate_hash_password, 5)
   return get_string(base, coordinate_salt_password)
 
-def decrypt(base: str, N: int, password: str):
+def decrypt(base: str, hash_lis: list, password: str):
+  hash_lis.reverse()
   dic = get_dic(base)
   dic_reverse = get_dic(base[::-1])
   coordinate_password = get_coordinate(dic, password[:5]) + get_coordinate(dic_reverse, password[5:])
   coordinate_salt_password = de_salt(coordinate_password, 5)
-  coordinate_hash_password = hash(coordinate_salt_password, N)
+  # perform hash, remember that the order of hash is opposite to in encrypt
+  coordinate_hash_password = coordinate_salt_password
+  for hash_number in hash_lis:
+    coordinate_hash_password = hash(coordinate_hash_password, hash_number)
   return get_string(base[::-1], coordinate_hash_password)
 
 
@@ -124,11 +140,12 @@ def function_password(key: str, password: str, type: str):
   number_N_key = get_unique_number_representation(coordinate_key) % PRIME
   # print("N", number_N_key)
   my_base_char = get_base(number_N_key) # the base characters got from key
-  
+  hash_lis = [number_N_key] # the hash list for performing hash
+  # check for which function to apply
   if (type == "encrypt"):
-    return encrypt(my_base_char, number_N_key, password)
+    return encrypt(my_base_char, hash_lis, password)
   elif (type == "decrypt"):
-    return decrypt(my_base_char, number_N_key, password)
+    return decrypt(my_base_char, hash_lis, password)
   else:
     print("Error in type name")
   
@@ -150,6 +167,7 @@ def test_accuracy(number_of_test: int):
 
 def test_security(number_of_test: int):
   cnt = 0
+  t = 0
   for _ in range(number_of_test):
     my_key = ''.join([BASE_CHAR[random.randint(0, BASE_CHAR_LEN - 1)] for _ in range(int(3))])
     password = function_password(my_key, "1234abcd@", "encrypt")
@@ -159,19 +177,17 @@ def test_security(number_of_test: int):
         for h in range(BASE_CHAR_LEN):
           cur = ''.join([BASE_CHAR[i], BASE_CHAR[j], BASE_CHAR[h]])
           arr.append(cur)
-    for key in arr:
+    for i in range(len(arr)):
+      key = arr[i]
       if (key == my_key): continue
       b = function_password(key, password, "decrypt")
       if (b == "1234abcd@"):
         cnt += 1
-        print("error", my_key, key)
+        t += i
+        print("error", my_key, key, i)
         break
-  print(cnt)
-test_security(100)
-          
-      
+  print(cnt, t // cnt)
+  
 
-a = function_password("baotran", "1234", "encrypt")
-b = function_password("baotrann", a, "decrypt")
-print(b)
-# test(int(1e4))
+# test_security(100)
+# test_accuracy(10000)
