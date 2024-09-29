@@ -16,7 +16,7 @@ app = Flask(__name__)
 @app.route('/generate/', methods=['POST'])
 def handleGenerate():
   LOW = 0
-  HIGH = 20
+  HIGH = 100
   data = request.get_json()
   # convert to int
   for key in data.keys():
