@@ -142,7 +142,7 @@ def function_password(key: str, password: str, type: str):
   number_N_key = get_unique_number_representation(coordinate_key) % PRIME
   # print("N", number_N_key)
   my_base_char = get_base(number_N_key) # the base characters got from key
-  hash_lis = [number_N_key] # the hash list for performing hash
+  hash_lis = [number_N_key, to_base(PRIME, number_N_key)] # the hash list for performing hash
   # check for which function to apply
   if (type == "encrypt"):
     return encrypt(my_base_char, hash_lis, password)
