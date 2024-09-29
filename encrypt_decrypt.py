@@ -11,6 +11,8 @@ BASE_CHAR_LEN = len(BASE_CHAR)
 
 PRIME = 2147483647
 
+PREFIX_LEN = 5
+
 #----------HELPER FUNCTIONS----------------------------------------------------------------------------------------------
 def get_dic(base: str):
   k = len(base)
@@ -118,15 +120,15 @@ def encrypt(base: str, hash_lis: list, password: str):
   coordinate_hash_password = coordinate_password
   for hash_number in hash_lis:
     coordinate_hash_password = hash(coordinate_hash_password, hash_number)
-  coordinate_salt_password = en_salt(coordinate_hash_password, 5)
+  coordinate_salt_password = en_salt(coordinate_hash_password, PREFIX_LEN)
   return get_string(base, coordinate_salt_password)
 
 def decrypt(base: str, hash_lis: list, password: str):
   hash_lis.reverse()
   dic = get_dic(base)
   dic_reverse = get_dic(base[::-1])
-  coordinate_password = get_coordinate(dic, password[:5]) + get_coordinate(dic_reverse, password[5:])
-  coordinate_salt_password = de_salt(coordinate_password, 5)
+  coordinate_password = get_coordinate(dic, password[:PREFIX_LEN]) + get_coordinate(dic_reverse, password[PREFIX_LEN:])
+  coordinate_salt_password = de_salt(coordinate_password, PREFIX_LEN)
   # perform hash, remember that the order of hash is opposite to in encrypt
   coordinate_hash_password = coordinate_salt_password
   for hash_number in hash_lis:
@@ -145,6 +147,9 @@ def function_password(key: str, password: str, type: str):
   if (type == "encrypt"):
     return encrypt(my_base_char, hash_lis, password)
   elif (type == "decrypt"):
+    # if the len is less than PREFIX_LEN, then the password to decrypt cannot be executed
+    if (len(password) < PREFIX_LEN):
+      return ""
     return decrypt(my_base_char, hash_lis, password)
   else:
     print("Error in type name")
@@ -189,5 +194,5 @@ def test_security(number_of_test: int):
   print(cnt, t // cnt)
   
 
-# test_security(100)
+# test_security(10)
 # test_accuracy(10000)
