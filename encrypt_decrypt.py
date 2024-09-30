@@ -1,7 +1,7 @@
 import random
-
 from generate import generate_password
 
+#----------CONSTANTS----------------------------------------------------------------------------------------------
 UPPER_CASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 LOWER_CASE = "abcdefghijklmnopqrstuvwxyz"
 DIGITS = "0123456789"
@@ -12,7 +12,22 @@ BASE_CHAR_LEN = len(BASE_CHAR)
 PRIME = 2147483647
 
 PREFIX_LEN = 5
-ALTERNATE_LEN = 4 # alternate length is 3, i.e 4 - 1
+ALTERNATE_LEN = 4 # alternate length is 3, i.e 4 - 1, use for salting
+
+DATA_BASE_LEN = 100001
+
+#----------MYSQL----------------------------------------------------------------------------------------------
+from connect_to_database import get_db
+
+def get_base(N: int):
+  # we will query the database to get the BASE_CHAR we want
+  db = get_db()
+  mycursor = db.cursor()
+  idx = (N % DATA_BASE_LEN) + 1 # database index start from 1
+  query = f"SELECT base_char FROM base WHERE id = {idx}"
+  mycursor.execute(query)
+  arr = mycursor.fetchall()
+  return arr[0][0]
 
 #----------HELPER FUNCTIONS----------------------------------------------------------------------------------------------
 def get_dic(base: str):
@@ -49,10 +64,6 @@ def get_unique_number_representation(coordinate: list):
     total += coordinate[i] * BASE_CHAR_LEN ** i
   return total
 
-def get_base(N: int):
-  # we will query the database to get the BASE_CHAR we want
-  return BASE_CHAR
-
 def to_base(number: int, base: int):
   if (number == 0):
     return 0
@@ -63,7 +74,6 @@ def to_base(number: int, base: int):
   return int(''.join(digits))
 
 #----------MAIN FUNCTIONS----------------------------------------------------------------------------------------------
-
 def en_salt(coordinate: list, prefix_len: int):
   k = len(coordinate)
   arr_len = ALTERNATE_LEN * k + prefix_len
@@ -158,12 +168,9 @@ def function_password(key: str, password: str, type: str):
     print("Error in type name")
   
 #----------TEST----------------------------------------------------------------------------------------------
-
 def test_accuracy(number_of_test: int):
-  
   for _ in range(number_of_test):
     my_key = ''.join([BASE_CHAR[random.randint(0, BASE_CHAR_LEN - 1)] for _ in range(int(1e2))])
-    
     special_char = random.randint(0, 10)
     upper_case = random.randint(0, 10)
     password = generate_password(special_char, upper_case)
