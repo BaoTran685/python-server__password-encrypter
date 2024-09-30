@@ -12,4 +12,4 @@
 ## Decryption
 - Similar to Encryption, but in opposite order.
 - First, we still get Key and Password from the client. Key is then turned into a coordinate vector and we get Base. Note that if Key is the same, we get the same Base and that makes our encryption/decryption work.
-- Then, to turn the encrypted string back into its original one, we remove the salt, then hash it in the backward direction (opposite to in Encryption). But it is a pain to do so because we have to work with negative numbers. So we reverse Base, then apply hash in forward direction like in Encryption, and there we go our original password. We have successfully decrypt it!!!
+- Then, to turn the encrypted string back into its original one, we remove the salt, then hash it in the backward direction (opposite to in Encryption). But it is a pain to do so because we have to work with negative numbers. So we reverse Base, then apply hash in forward direction like in Encryption, and we get the original password. We have successfully decrypt it!!!
